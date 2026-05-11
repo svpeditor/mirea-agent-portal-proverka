@@ -1,0 +1,59 @@
+id: proverka
+name: "Проверка конкурсных работ"
+version: "1.0.0"
+category: "научная-работа"
+icon: "📋"
+short_description: |
+  Принимает папку с работами школьников (PDF/DOCX), вытаскивает текст,
+  отправляет в DeepSeek-R1 на разбор по чек-листу научной экспертизы,
+  возвращает сводный Word и zip с заключениями по каждой работе.
+
+inputs:
+  competition:
+    type: text
+    label: "Название конкурса"
+    placeholder: "например, ВНТК-2025"
+    required: true
+  grade_level:
+    type: select
+    label: "Класс участников"
+    options:
+      - { value: "5-7", label: "5-7 класс" }
+      - { value: "8-9", label: "8-9 класс" }
+      - { value: "10-11", label: "10-11 класс" }
+    default: "10-11"
+
+files:
+  works:
+    type: folder
+    label: "Папка с работами"
+    accept: [".pdf", ".docx"]
+    max_total_size_mb: 256
+    required: true
+
+outputs:
+  - id: report
+    type: docx
+    label: "Сводное заключение"
+    filename: "report.docx"
+    primary: true
+  - id: per_work
+    type: zip
+    label: "Заключения по каждой работе"
+    filename: "per_work.zip"
+
+runtime:
+  docker:
+    base_image: "python:3.12-slim"
+    setup:
+      - "pip install -r requirements.txt"
+    entrypoint: ["python", "agent.py"]
+  limits:
+    max_runtime_minutes: 60
+    max_memory_mb: 1024
+    max_cpu_cores: 2
+  llm:
+    provider: openrouter
+    models:
+      - "deepseek/deepseek-r1"
+      - "anthropic/claude-haiku-4-5-20251001"
